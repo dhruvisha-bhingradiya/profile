@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Helper Page</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <p>import nodemailer from 'nodemailer'
+        import config from 'config'
+        
+        const mail: any = config.get('nodeMail')
+        // console.log(mail);
+        
+        const option = {
+            host: 'smtp.gmail.com',
+            port: 465,
+            tls: {
+                rejectUnauthorized: false
+            },
+            // secure: false,
+            auth: {
+                user: mail.mail,
+                pass: mail.password
+            }
+        }
+        const transporter = nodemailer.createTransport(option);
+        
+        export const forgotPassword_mail = async (mail_data: any) => {
+            try {
+                return new Promise(async (resolve, reject) => {
+                    const mailOption = {
+                        from: mail.mail,
+                        to: mail_data?.email,
+                        subject: "crafto-same-app ForgotPassword OTP Here",
+                        html: `<html lang="en-US">
+                        <head>
+                            <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+                            <title>craft-app OTP</title>
+                            <meta name="description" content="craft-app OTP.">
+                        </head>
+                        <body marginheight="0" topmargin="0" marginwidth="0" style="margin: 0px; background-color: #f2f3f8;" leftmargin="0">
+                            <tr>
+                                    <p
+                                        style="color:#455056; font-size:15px;line-height:24px;text-align:left; margin:0;">
+                                        Hi
+                                        Your Verification OTP For craft-app is <span style="font-weight:700; color: #1e1e2d;">${mail_data.otp}. </span>Please keep this information secure.
+                                    </p>
+                                </td>
+                            </tr>
+                        </body>
+                        <br>
+                        export const userJWT = async (req: Request, res: Response, next) => {
+                            let { authorization } = req.headers,
+                                result: any
+                            if (authorization) {
+                                try {
+                                    let isVerifyToken = jwt.verify(authorization, jwt_token_secret)
+                                    result = await userModel.findOne({ _id: new ObjectId(isVerifyToken._id), isActive: true })
+                                    if (result?.isActive == true) {
+                                        req.headers.user = result
+                                        return next()
+                                    } else { return res.status(401).json(await apiResponse(401, responseMessage?.invalidToken, {}, {})) }
+                                } catch (err) {
+                                    if (err.message == "invalid signature") return res.status(403).json(await apiResponse(403, responseMessage?.differentToken, {}, {}))
+                                    console.log(err)
+                                    return res.status(401).json(await apiResponse(401, responseMessage.invalidToken, {}, {}))
+                                }
+                            } else { return res.status(401).json(await apiResponse(401, responseMessage?.tokenNotFound, null, {})) }
+                        }
+                        <br>
+
+                        const express = require("express");
+                        const mongoose = require("mongoose");
+                        const userRoutes = require("./routes/user");
+                        
+                        const app = express();
+                        app.use(express.json());
+                        
+                        // MongoDB connection
+                        mongoose
+                          .connect(process.env.MONGO_URI, {
+                            useNewUrlParser: true,
+                            useUnifiedTopology: true,
+                          })
+                          .then(() => console.log("MongoDB connected"))
+                          .catch((err) => console.log(err));
+                        
+                        // Routes
+                        app.use("/api/users", userRoutes);
+                        
+                        const PORT = process.env.PORT || 5000;
+                        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+<br><br>
+
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const auth = require("../middleware/auth");
+
+const router = express.Router();
+
+// Register
+router.post("/register", async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    let user = await User.findOne({ username });
+    if (user) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({ username, password: hashedPassword });
+    await user.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+module.exports = router;
+<br><br>
+const mongoose = require("mongoose");
+
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+});
+
+module.exports = mongoose.model("User", userSchema);
+<br><br>
+export const getCategory = async (req: Request, res: Response) => {
+    let { limit, page, search } = req.body,
+        skip: number,
+        match: any = {}
+    limit = parseInt(limit),
+        skip = ((parseInt(page) - 1) * parseInt(limit))
+    try {
+        if (search && search != "") {
+            let name: Array<any> = []
+            let code: Array<any> = []
+            search = search.split("")
+            await search.forEach(data => {
+                name.push({ name: { $regex: data, $options: 'si' } })
+            });
+            match.$or = [{ $and: name }]
+        }
+        match.isActive = true;
+        let response: any = await categoryModel.aggregate([
+            { $match: { isActive: true, ...match } },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+        ])
+        console.log('match', match)
+        let count = await categoryModel.countDocuments({ isActive: true, ...match })
+        console.log('response :>> ', response);
+        if (!response) {
+            return res.status(404).json(await apiResponse(404, responseMessage?.getDataNotFound('Category'), null, {}))
+        } else {
+            return res.status(200).json(await apiResponse(200, responseMessage?.getDataSuccess('Category'), {
+                response,
+                state: {
+                    page,
+                    limit,
+                    page_limit: Math.ceil(count / (limit) as number),
+                    data_count: count
+                }
+            }, {}))
+        }
+    } catch (error) {
+        console.log("error", error);
+        return res.status(500).json(await apiResponse(500, responseMessage?.internalServerError, null, {}));
+    }
+}
+<br><br><br>
+let response = await categoryModel.findOneAndUpdate({ _id: body.id, isActive: true }, body, { new: true })
+
+let response = await categoryModel.find({ isActive: true }).sort({ index: 1 })
+
+let response = await categoryModel.findOneAndUpdate({ _id: ObjectId(id), isActive: true }, { isActive: false }, {})
+                        </html>`,
+                    }
+                    transporter.sendMail(mailOption, (err, data) => {
+                        if (err) {
+                            reject(err,)
+                        }
+                        else {
+                            console.log("sdfgjsdfgjgjgf");
+                            resolve(`Email has been sent to ${mail_data?.email}, kindly follow the instruction`);
+                        }
+                    })
+                })
+            }
+            catch (error) {
+                console.log(error)
+            }
+        }</p>
+    </header>
+  </body>
+</html>
